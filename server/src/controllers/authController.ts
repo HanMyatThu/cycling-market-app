@@ -5,6 +5,7 @@ import { createUserSchema } from "src/validationSchemas/authSchema";
 
 import crypto from "crypto";
 import { authToken } from "src/models/authToken";
+import { SendEmail } from "src/utils/sendEmail";
 
 export const createNewUser: RequestHandler = async (req, res) => {
   try {
@@ -12,7 +13,7 @@ export const createNewUser: RequestHandler = async (req, res) => {
     if (!validation.success) {
       return res.status(400).send(validation.error.format());
     }
-    const { email, password, name } = req.body;
+    const { email } = req.body;
 
     const isUserExisted = await User.findOne({ email });
     if (isUserExisted) {
@@ -30,9 +31,15 @@ export const createNewUser: RequestHandler = async (req, res) => {
       owner: user._id,
       token,
     });
+    const link = `http://localhost:8000/verify?id=${user._id}&token=${token}`;
 
     //verify email
-    const link = `http://localhost:8000/verify?id=${user._id}&token=${token}`;
+    await SendEmail(
+      user.email,
+      "verification@cyclemarket.com",
+      `<h1>Please click on <a href="${link}">this link</a> to verify your account</h1>`
+    );
+
     res.send(link);
   } catch (error) {}
 };

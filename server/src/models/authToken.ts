@@ -1,7 +1,17 @@
 import bcrypt from "bcryptjs";
-import mongoose from "mongoose";
+import mongoose, { Document } from "mongoose";
 
-const authTokenSchema = new mongoose.Schema({
+interface AuthTokenDocument extends Document {
+  owner: mongoose.Schema.Types.ObjectId;
+  token: string;
+  createdAt: Date;
+}
+
+interface Methods {
+  comparePassword(password: string): Promise<boolean>;
+}
+
+const authTokenSchema = new mongoose.Schema<AuthTokenDocument, {}, Methods>({
   owner: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "users",
