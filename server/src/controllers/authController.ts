@@ -1,4 +1,6 @@
 import { RequestHandler } from "express";
+import { User } from "src/models/user";
+import { JsonOne } from "src/resources/responseResource";
 import { createUserSchema } from "src/validationSchemas/authSchema";
 
 export const createNewUser: RequestHandler = async (req, res) => {
@@ -8,5 +10,15 @@ export const createNewUser: RequestHandler = async (req, res) => {
       return res.status(400).send(validation.error.format());
     }
     const { email, password, name } = req.body;
+
+    const isUserExisted = await User.findOne({ email });
+    if (isUserExisted) {
+      return JsonOne(null, 400, "User with email is already registered", res);
+    }
+
+    const user = new User({
+      ...req.body,
+    });
+    await user.save();
   } catch (error) {}
 };
