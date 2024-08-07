@@ -2,6 +2,7 @@ import { Router } from "express";
 import {
   createNewUser,
   generateVerificationLink,
+  refreshToken,
   signIn,
   verifyEmail,
 } from "src/controllers/authController";
@@ -20,5 +21,6 @@ authRouter.post("/verify", validate(verifyTokenSchema), verifyEmail);
 authRouter.post("/sign-in", signIn);
 authRouter.get("/verify-token", isAuth, generateVerificationLink);
 authRouter.get("/profile", isAuth, getProfile);
+authRouter.post("/refresh-token", refreshToken);
 
 export default authRouter;

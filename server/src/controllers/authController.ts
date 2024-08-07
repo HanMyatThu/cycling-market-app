@@ -140,3 +140,47 @@ export const generateVerificationLink: RequestHandler = async (req, res) => {
     JsonOne(null, 500, "Server Error", res);
   }
 };
+
+export const refreshToken: RequestHandler = async (req, res) => {
+  try {
+    const { refreshToken } = req.body;
+    if (!refreshToken) return JsonOne(null, 401, "Unauthorized Request!", res);
+
+    const payload = jwt.verify(refreshToken, process.env.JWT_SECRET!) as {
+      id: string;
+    };
+    if (payload.id) {
+      const user = await User.findOne({
+        _id: payload.id,
+        tokens: refreshToken,
+      });
+
+      if (!user) {
+        // user is compromised and removed all the previous tokens
+        await User.findByIdAndUpdate(payload.id, { tokens: [] });
+        return JsonOne(null, 401, "Unauthorized Request!", res);
+      }
+
+      const newAccessToken = jwt.sign(payload, process.env.JWT_SECRET!, {
+        expiresIn: "15m",
+      });
+
+      const newRefreshToken = jwt.sign(payload, process.env.JWT_SECRET!);
+
+      user.tokens = user.tokens.filter((t) => t !== refreshToken);
+      user.tokens.push(newRefreshToken);
+      await user.save();
+
+      JsonOne(
+        {
+          tokens: { refresh: newRefreshToken, access: newAccessToken },
+        },
+        200,
+        null,
+        res
+      );
+    }
+  } catch (error) {
+    JsonOne(null, 500, "Server Error", res);
+  }
+};
