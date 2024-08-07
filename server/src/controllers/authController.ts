@@ -1,7 +1,6 @@
 import { RequestHandler } from "express";
 import { User } from "src/models/user";
 import { JsonOne } from "src/resources/responseResource";
-import { createUserSchema } from "src/validationSchemas/authSchema";
 
 import crypto from "crypto";
 import jwt from "jsonwebtoken";
@@ -111,6 +110,33 @@ export const signIn: RequestHandler = async (req, res) => {
       res
     );
   } catch (e) {
+    JsonOne(null, 500, "Server Error", res);
+  }
+};
+
+export const generateVerificationLink: RequestHandler = async (req, res) => {
+  try {
+    const { id, email } = req.user;
+
+    const token = crypto.randomBytes(36).toString("hex");
+    await authToken.findOneAndDelete({ owner: id });
+    await authToken.create({ owner: id, token });
+
+    const link = `http://localhost:8000/verify.html?id=${id}&token=${token}`;
+    //verify email
+    await SendEmail(
+      email,
+      "verification@cyclemarket.com",
+      `<h1>Please click on <a href="${link}">this link</a> to verify your account</h1>`
+    );
+
+    JsonOne(
+      { message: "We have sent verification to your email. Please verify it." },
+      200,
+      null,
+      res
+    );
+  } catch (error) {
     JsonOne(null, 500, "Server Error", res);
   }
 };
