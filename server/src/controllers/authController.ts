@@ -4,6 +4,8 @@ import { JsonOne } from "src/resources/responseResource";
 import { createUserSchema } from "src/validationSchemas/authSchema";
 
 import crypto from "crypto";
+import jwt from "jsonwebtoken";
+import "dotenv/config";
 import { authToken } from "src/models/authToken";
 import { SendEmail } from "src/utils/sendEmail";
 
@@ -59,5 +61,51 @@ export const verifyEmail: RequestHandler = async (req, res) => {
     await authToken.findByIdAndDelete(verifiedToken._id);
 
     res.send({ message: "Thanks for joining us. Your Email is verified." });
-  } catch (e) {}
+  } catch (e) {
+    JsonOne(null, 500, "Server Error", res);
+  }
+};
+
+export const signIn: RequestHandler = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    const user = await User.findOne({ email });
+    if (!user) return JsonOne(null, 403, "Invalid Credentials", res);
+
+    const isMatched = await user.comparePassword(password);
+    if (!isMatched) return JsonOne(null, 403, "Invalid Credentials", res);
+
+    const payload = { id: user._id };
+
+    const accessToken = jwt.sign(payload, process.env.JWT_SECRET!, {
+      expiresIn: "15m",
+    });
+
+    const refreshToken = jwt.sign(payload, process.env.JWT_SECRET!);
+
+    if (!user.tokens) user.tokens = [refreshToken];
+    else user.tokens.push(refreshToken);
+
+    await user.save();
+
+    return JsonOne(
+      {
+        profile: {
+          id: user._id,
+          email: user.email,
+          name: user.name,
+          verified: user.verified,
+        },
+        tokens: {
+          refresh: refreshToken,
+          accessToken,
+        },
+      },
+      200,
+      null,
+      res
+    );
+  } catch (e) {
+    JsonOne(null, 500, "Server Error", res);
+  }
 };
