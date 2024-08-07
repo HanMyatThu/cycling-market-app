@@ -29,7 +29,7 @@ export const createNewUser: RequestHandler = async (req, res) => {
       owner: user._id,
       token,
     });
-    const link = `http://localhost:8000/verify?id=${user._id}&token=${token}`;
+    const link = `http://localhost:8000/verify.html?id=${user._id}&token=${token}`;
 
     //verify email
     await SendEmail(
@@ -38,7 +38,12 @@ export const createNewUser: RequestHandler = async (req, res) => {
       `<h1>Please click on <a href="${link}">this link</a> to verify your account</h1>`
     );
 
-    res.send(link);
+    JsonOne(
+      { message: "We have sent verification to your email. Please verify it." },
+      200,
+      null,
+      res
+    );
   } catch (error) {
     JsonOne(null, 500, "Server Error", res);
   }

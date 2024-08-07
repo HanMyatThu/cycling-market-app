@@ -4,6 +4,7 @@ import { connectDb } from "src/db";
 
 const app: Application = express();
 
+app.use(express.static("src/public"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
