@@ -9,10 +9,6 @@ import { SendEmail } from "src/utils/sendEmail";
 
 export const createNewUser: RequestHandler = async (req, res) => {
   try {
-    const validation = createUserSchema.safeParse(req.body);
-    if (!validation.success) {
-      return res.status(400).send(validation.error.format());
-    }
     const { email } = req.body;
 
     const isUserExisted = await User.findOne({ email });
@@ -41,5 +37,27 @@ export const createNewUser: RequestHandler = async (req, res) => {
     );
 
     res.send(link);
-  } catch (error) {}
+  } catch (error) {
+    JsonOne(null, 500, "Server Error", res);
+  }
+};
+
+export const verifyEmail: RequestHandler = async (req, res) => {
+  try {
+    const { id, token } = req.body;
+    const verifiedToken = await authToken.findOne({
+      owner: id,
+    });
+    if (!verifiedToken) return JsonOne(null, 403, "Unauthorized Request!", res);
+
+    const isMatched = await verifiedToken.compareToken(token);
+    if (!isMatched)
+      return JsonOne(null, 403, "Unauthorized Request, Invalid Token", res);
+
+    await User.findByIdAndUpdate(id, { verified: true });
+
+    await authToken.findByIdAndDelete(verifiedToken._id);
+
+    res.send({ message: "Thanks for joining us. Your Email is verified." });
+  } catch (e) {}
 };

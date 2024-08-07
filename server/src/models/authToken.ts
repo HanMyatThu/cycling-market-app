@@ -8,7 +8,7 @@ interface AuthTokenDocument extends Document {
 }
 
 interface Methods {
-  comparePassword(password: string): Promise<boolean>;
+  compareToken(token: string): Promise<boolean>;
 }
 
 const authTokenSchema = new mongoose.Schema<AuthTokenDocument, {}, Methods>({
