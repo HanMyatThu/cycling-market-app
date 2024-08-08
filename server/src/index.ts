@@ -1,5 +1,6 @@
 import express, { Application, RequestHandler } from "express";
 import authRouter from "routes/auth";
+import "dotenv/config";
 import { connectDb } from "src/db";
 
 const app: Application = express();

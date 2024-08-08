@@ -7,6 +7,8 @@ import jwt from "jsonwebtoken";
 import "dotenv/config";
 import { authToken } from "src/models/authToken";
 import { SendEmail } from "src/utils/sendEmail";
+import { PasswordResetTokenModel } from "src/models/passwordResetToken";
+import Mail from "nodemailer/lib/mailer";
 
 export const createNewUser: RequestHandler = async (req, res) => {
   try {
@@ -180,6 +182,94 @@ export const refreshToken: RequestHandler = async (req, res) => {
         res
       );
     }
+  } catch (error) {
+    JsonOne(null, 500, "Server Error", res);
+  }
+};
+
+export const SignOut: RequestHandler = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) return JsonOne(null, 401, "Unauthorized Request!", res);
+
+    user.tokens = [];
+    await user.save();
+
+    JsonOne(
+      {
+        message: "You have successfully Logout",
+      },
+      200,
+      null,
+      res
+    );
+  } catch (e) {
+    JsonOne(null, 500, "Server Error", res);
+  }
+};
+
+export const generateForgetPassLink: RequestHandler = async (req, res) => {
+  try {
+    const { email } = req.body;
+    const user = await User.findOne({ email });
+    if (!user) return JsonOne(null, 404, "Account Not Found", res);
+
+    //remove token if existed
+    await PasswordResetTokenModel.findOneAndDelete({ owner: user._id });
+
+    const token = crypto.randomBytes(36).toString("hex");
+    await PasswordResetTokenModel.create({ owner: user._id, token });
+
+    const passResetLink = `${process.env.PASSWORD_RESET_LINK}?id=${user._id}&token=${token}`;
+
+    await SendEmail(
+      user.email,
+      "support@cyclemarket.com",
+      `<h1>Please click on <a href="${passResetLink}">this link</a> to reset your password</h1>`
+    );
+
+    JsonOne(
+      {
+        message: "Please check your email to reset your password",
+      },
+      200,
+      null,
+      res
+    );
+  } catch (error) {
+    JsonOne(null, 500, "Server Error", res);
+  }
+};
+
+export const grantValid: RequestHandler = async (req, res) => {
+  res.json({
+    valid: true,
+  });
+};
+
+export const resetPassword: RequestHandler = async (req, res) => {
+  try {
+    const { id, password } = req.body;
+    const user = await User.findById(id);
+    if (!user) return JsonOne(null, 403, "Unauthorized Access!", res);
+
+    const matched = await user.comparePassword(password);
+    if (matched)
+      return JsonOne(null, 422, "New Password must be different!", res);
+
+    user.password = password;
+    await user.save();
+
+    await PasswordResetTokenModel.findOneAndDelete({ owner: user._id });
+
+    JsonOne(
+      {
+        message: "Your password is updated",
+      },
+      200,
+      null,
+      res
+    );
   } catch (error) {
     JsonOne(null, 500, "Server Error", res);
   }

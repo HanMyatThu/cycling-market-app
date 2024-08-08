@@ -23,7 +23,7 @@ window.addEventListener("DOMContentLoaded", async () => {
   token = params.token;
   id = params.id;
 
-  const res = await fetch("/auth/verify-pass-reset-token", {
+  const res = await fetch("/api/auth/verify-pass-reset-token", {
     method: "POST",
     body: JSON.stringify({ token, id }),
     headers: {

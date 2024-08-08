@@ -23,7 +23,7 @@ export const createUserSchema = yup.object({
     .matches(passwordRegex, "Password is too simple"),
 });
 
-export const verifyTokenSchema = yup.object({
+const tokenAndId = {
   id: yup.string().test({
     name: "valid-id",
     message: "Invalid user id",
@@ -32,4 +32,17 @@ export const verifyTokenSchema = yup.object({
     },
   }),
   token: yup.string().required("Token is missing"),
+};
+
+export const verifyTokenSchema = yup.object({
+  ...tokenAndId,
+});
+
+export const resetPasswordSchema = yup.object({
+  ...tokenAndId,
+  password: yup
+    .string()
+    .required("Password is required")
+    .min(8, "Password should have minimum 8 charactors.")
+    .matches(passwordRegex, "Password is too simple"),
 });

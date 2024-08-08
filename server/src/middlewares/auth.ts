@@ -3,6 +3,7 @@ import { JsonOne } from "src/resources/responseResource";
 import "dotenv/config";
 import jwt, { TokenExpiredError } from "jsonwebtoken";
 import { User } from "src/models/user";
+import { PasswordResetTokenModel } from "src/models/passwordResetToken";
 
 export const isAuth: RequestHandler = async (req, res, next) => {
   try {
@@ -31,4 +32,16 @@ export const isAuth: RequestHandler = async (req, res, next) => {
       return JsonOne(null, 500, "Unknown Error", res);
     }
   }
+};
+
+export const isValidPassResetToken: RequestHandler = async (req, res, next) => {
+  const { id, token } = req.body;
+  const resetPassToken = await PasswordResetTokenModel.findOne({ owner: id });
+
+  if (!resetPassToken) return JsonOne(null, 403, "Unauthorized Requesst!", res);
+
+  const matched = resetPassToken.compareToken(token);
+  if (!matched) return JsonOne(null, 403, "Unauthorized Requesst!", res);
+
+  next();
 };
