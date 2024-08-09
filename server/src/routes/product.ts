@@ -1,5 +1,8 @@
 import { Router } from "express";
-import { CreateNewProduct } from "src/controllers/productController";
+import {
+  CreateNewProduct,
+  UpdateProduct,
+} from "src/controllers/productController";
 import { isAuth } from "src/middlewares/auth";
 import { fileUpload } from "src/middlewares/file-upload";
 import { validate } from "src/middlewares/validator";
@@ -14,5 +17,7 @@ productRouter.post(
   validate(createNewProductSchema),
   CreateNewProduct
 );
+
+productRouter.patch("/:id", isAuth, fileUpload, UpdateProduct);
 
 export default productRouter;
