@@ -7,6 +7,10 @@ interface UserDocument extends Document {
   password: string;
   verified: boolean;
   tokens: string[];
+  avatar: {
+    id: string;
+    url: string;
+  };
 }
 
 interface Methods {
@@ -33,6 +37,11 @@ const UserSchema = new mongoose.Schema<UserDocument, {}, Methods>(
       default: false,
     },
     tokens: [String],
+    avatar: {
+      type: Object,
+      url: String,
+      id: String,
+    },
   },
   { timestamps: true }
 );

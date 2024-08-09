@@ -9,8 +9,14 @@ import {
   signIn,
   verifyEmail,
 } from "src/controllers/authController";
-import { getProfile, updateProfile } from "src/controllers/userController";
+import {
+  getProfile,
+  getPublicProfile,
+  updateAvatar,
+  updateProfile,
+} from "src/controllers/userController";
 import { isAuth, isValidPassResetToken } from "src/middlewares/auth";
+import { fileUpload } from "src/middlewares/file-upload";
 import { validate } from "src/middlewares/validator";
 import {
   createUserSchema,
@@ -42,6 +48,9 @@ authRouter.post("/sign-in", signIn);
 authRouter.post("/sign-out", isAuth);
 
 authRouter.get("/profile", isAuth, getProfile);
+authRouter.get("/profile/:id", isAuth, getPublicProfile);
 authRouter.patch("/update-profile", isAuth, updateProfile);
+
+authRouter.patch("/update-avatar", isAuth, fileUpload, updateAvatar);
 
 export default authRouter;
