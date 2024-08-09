@@ -1,7 +1,9 @@
-import express, { Application, RequestHandler } from "express";
-import authRouter from "routes/auth";
-import "dotenv/config";
+import express, { Application } from "express";
 import { connectDb } from "src/db";
+import "dotenv/config";
+
+import authRouter from "routes/auth";
+import productRouter from "routes/product";
 
 const app: Application = express();
 
@@ -13,6 +15,7 @@ connectDb();
 
 // api routes
 app.use("/api/auth", authRouter);
+app.use("/api/products", productRouter);
 
 app.get("/", (req, res) => {
   res.json({

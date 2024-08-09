@@ -12,4 +12,7 @@ cloudinary.config({
   secure: true,
 });
 
-export default cloudinary;
+const cloudUploader = cloudinary.uploader;
+
+export const cloudApi = cloudinary.api;
+export default cloudUploader;

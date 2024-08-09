@@ -3,7 +3,7 @@ import { RequestHandler } from "express";
 import { isValidObjectId } from "mongoose";
 import { User } from "src/models/user";
 import { JsonOne } from "src/resources/responseResource";
-import cloudinary from "src/utils/cloudinary";
+import cloudUploader from "src/utils/cloudinary";
 
 interface UserProfile {
   id: string;
@@ -73,11 +73,11 @@ export const updateAvatar: RequestHandler = async (req, res) => {
 
     if (user.avatar?.id) {
       //remove avatar file
-      await cloudinary.uploader.destroy(user.avatar.id);
+      await cloudUploader.destroy(user.avatar.id);
     }
 
     // upload avatar file
-    const { secure_url: url, public_id: id } = await cloudinary.uploader.upload(
+    const { secure_url: url, public_id: id } = await cloudUploader.upload(
       avatar.filepath,
       {
         width: 300,

@@ -38,6 +38,7 @@ const ProductSchema = new mongoose.Schema<ProductDocument>(
     purchasingDate: {
       type: Date,
       default: Date.now(),
+      required: true,
     },
     category: {
       type: String,
