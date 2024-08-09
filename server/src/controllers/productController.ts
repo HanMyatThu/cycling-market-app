@@ -225,3 +225,50 @@ export const DeleteProduct: RequestHandler = async (req, res) => {
     JsonOne(null, 500, "Server Error", res);
   }
 };
+
+/**
+ * 1. User must be authenticated
+ * 2. Check if product exists
+ * 3. check if image exists
+ * 4. delete a single image from cloudinary
+ * 5. update the image array
+ * 6. return the response back
+ */
+export const DeleteProductImage: RequestHandler = async (req, res) => {
+  try {
+    const { id, imageId } = req.params;
+    if (!isValidObjectId(id) || !isValidObjectId(imageId)) {
+      return JsonOne(null, 422, "Invalid Image Id", res);
+    }
+
+    const product = await Product.findById(id);
+    if (!product) return JsonOne(null, 404, "Product Not Found", res);
+
+    const isImageExists = product.images.filter(
+      (image) => image.id === imageId
+    );
+    if (!isImageExists.length)
+      return JsonOne(null, 404, "Image Not Found", res);
+
+    product.images = product.images.filter((image) => image.id !== imageId);
+
+    if (product.thumbnail === isImageExists[0].url) {
+      product.thumbnail = product.images[0]?.url || "";
+    }
+
+    await product.save();
+    await cloudUploader.destroy(imageId);
+
+    JsonOne(
+      {
+        message: "Image removed successfully",
+        product,
+      },
+      200,
+      null,
+      res
+    );
+  } catch (error) {
+    JsonOne(null, 500, "Server Error", res);
+  }
+};
