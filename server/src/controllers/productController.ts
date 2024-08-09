@@ -3,7 +3,7 @@ import { RequestHandler } from "express";
 import { isValidObjectId } from "mongoose";
 import { Product } from "src/models/product";
 import { JsonOne } from "src/resources/responseResource";
-import cloudUploader from "src/utils/cloudinary";
+import cloudUploader, { cloudApi } from "src/utils/cloudinary";
 
 const uploadImage = (filePath: string): Promise<UploadApiResponse> => {
   return cloudUploader.upload(filePath, {
@@ -176,6 +176,46 @@ export const UpdateProduct: RequestHandler = async (req, res) => {
       {
         message: "Product Updated Successfully",
         product,
+      },
+      200,
+      null,
+      res
+    );
+  } catch (error) {
+    JsonOne(null, 500, "Server Error", res);
+  }
+};
+
+/**
+ * 1. User must be authenticated
+ * 2. Check if product exists
+ * 3. delete a product from database
+ * 4. delete images from cloudinary
+ * 5. return the response back
+ */
+export const DeleteProduct: RequestHandler = async (req, res) => {
+  try {
+    const productId = req.params.id;
+    if (!isValidObjectId(productId))
+      return JsonOne(null, 422, "Invalid Product Id!", res);
+
+    const product = await Product.findById(req.params.id);
+    if (!product) {
+      return JsonOne(null, 404, "Product Not Found!", res);
+    }
+
+    const images = product.images;
+
+    if (images.length) {
+      const ids = images.map((image) => image.id);
+      await cloudApi.delete_resources(ids);
+    }
+
+    await product.deleteOne();
+
+    JsonOne(
+      {
+        message: "Product is deleted",
       },
       200,
       null,

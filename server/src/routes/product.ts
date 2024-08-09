@@ -1,6 +1,7 @@
 import { Router } from "express";
 import {
   CreateNewProduct,
+  DeleteProduct,
   UpdateProduct,
 } from "src/controllers/productController";
 import { isAuth } from "src/middlewares/auth";
@@ -19,5 +20,7 @@ productRouter.post(
 );
 
 productRouter.patch("/:id", isAuth, fileUpload, UpdateProduct);
+
+productRouter.delete("/:id", isAuth, DeleteProduct);
 
 export default productRouter;
