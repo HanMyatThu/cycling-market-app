@@ -3,7 +3,9 @@ import {
   CreateNewProduct,
   DeleteProduct,
   DeleteProductImage,
+  getAllProductsBySorting,
   getProductByCategory,
+  getProductsByUser,
   getSingleProduct,
   UpdateProduct,
 } from "src/controllers/productController";
@@ -22,6 +24,8 @@ productRouter.post(
   CreateNewProduct
 );
 
+productRouter.get("/listings", isAuth, getProductsByUser);
+productRouter.get("/latest", getAllProductsBySorting);
 productRouter.get("/:id", isAuth, getSingleProduct);
 productRouter.patch("/:id", isAuth, fileUpload, UpdateProduct);
 productRouter.delete("/:id", isAuth, DeleteProduct);

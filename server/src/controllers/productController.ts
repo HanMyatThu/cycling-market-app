@@ -335,3 +335,77 @@ export const getProductByCategory: RequestHandler = async (req, res) => {
     JsonOne(null, 500, "Server Error", res);
   }
 };
+
+/**
+ * 1. check if user is authenticated
+ * 2. get all the products by owner (userid)
+ * 3. apply pagination and sorted with date
+ * 4. return the resposne back
+ */
+export const getProductsByUser: RequestHandler = async (req, res) => {
+  try {
+    const { pageNo = "1", limit = "5" } = req.query;
+
+    //pagination
+    const productsCount = await Product.find({
+      owner: req.user.id,
+    }).countDocuments();
+    const products = await Product.find({ owner: req.user.id })
+      .sort("-createdAt")
+      .skip((Number(pageNo) - 1) * Number(limit))
+      .limit(Number(limit));
+    const productsCollection = productResource(products, {
+      id: req.user.id,
+      name: req.user.name,
+      avatar: req.user.avatar,
+    });
+    JsonOne(
+      {
+        products: productsCollection,
+        pagination: {
+          currentPage: pageNo,
+          limit,
+          totalPage: Math.ceil(productsCount / Number(limit)),
+        },
+      },
+      200,
+      null,
+      res
+    );
+  } catch (error) {
+    JsonOne(null, 500, "Server Error", res);
+  }
+};
+
+/**
+ * 1. get all products from database
+ * 2. show the lastest data
+ * 3. return the response back
+ */
+export const getAllProductsBySorting: RequestHandler = async (req, res) => {
+  try {
+    const { pageNo = "1", limit = "5" } = req.query;
+    //pagination
+    const productsCount = await Product.find().countDocuments();
+    const products = await Product.find()
+      .sort("-createdAt")
+      .skip((Number(pageNo) - 1) * Number(limit))
+      .limit(Number(limit));
+    const productsCollection = productResource(products);
+    JsonOne(
+      {
+        products: productsCollection,
+        pagination: {
+          currentPage: pageNo,
+          limit,
+          totalPage: Math.ceil(productsCount / Number(limit)),
+        },
+      },
+      200,
+      null,
+      res
+    );
+  } catch (error) {
+    JsonOne(null, 500, "Server Error", res);
+  }
+};
