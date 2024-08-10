@@ -1,7 +1,9 @@
 import { UploadApiResponse } from "cloudinary";
 import { RequestHandler } from "express";
 import { isValidObjectId } from "mongoose";
+import categories from "src/enum/categories";
 import { Product } from "src/models/product";
+import { productResource } from "src/resources/responseFormat";
 import { JsonOne } from "src/resources/responseResource";
 import cloudUploader, { cloudApi } from "src/utils/cloudinary";
 
@@ -263,6 +265,67 @@ export const DeleteProductImage: RequestHandler = async (req, res) => {
       {
         message: "Image removed successfully",
         product,
+      },
+      200,
+      null,
+      res
+    );
+  } catch (error) {
+    JsonOne(null, 500, "Server Error", res);
+  }
+};
+
+/**
+ * 1. check if user is authenticated
+ * 2. check if product is exists wit id
+ * 3. return the response with format
+ */
+export const getSingleProduct: RequestHandler = async (req, res) => {
+  try {
+    const productId = req.params.id;
+    if (!isValidObjectId(productId))
+      return JsonOne(null, 422, "Product ID is not valid", res);
+
+    const product = await Product.findById(productId);
+
+    if (!product) return JsonOne(null, 404, "Product Not Found!", res);
+
+    JsonOne({ product }, 200, null, res);
+  } catch (error) {
+    JsonOne(null, 500, "Server Error", res);
+  }
+};
+
+/**
+ * 1. Validate the category
+ * 2. find products by category (apply pagination if needed)
+ * 3. format data
+ * 4. return the response collection
+ */
+export const getProductByCategory: RequestHandler = async (req, res) => {
+  try {
+    const { category } = req.params;
+    const { pageNo = "1", limit = "5" } = req.query;
+    if (!categories.includes(category)) {
+      return JsonOne([], 200, null, res);
+    }
+
+    //pagination
+    const productsCount = await Product.find({ category }).countDocuments();
+    const products = await Product.find({ category })
+      .sort("-createdAt")
+      .skip((Number(pageNo) - 1) * Number(limit))
+      .limit(Number(limit));
+    const productCollection = productResource(products);
+
+    JsonOne(
+      {
+        products: productCollection,
+        pagination: {
+          currentPage: pageNo,
+          limit,
+          totalPage: Math.ceil(productsCount / Number(limit)),
+        },
       },
       200,
       null,
